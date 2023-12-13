@@ -58,7 +58,7 @@ float voltagetotemp(float v)
 	//            |
 	r = 5.0 * (1 - v) / v;
 
-	// 
+	// binary search through thermistor specs
 	cnt = sizeof(t) / sizeof(float);
 
 	b = 0;
