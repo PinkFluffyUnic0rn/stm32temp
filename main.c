@@ -19,6 +19,7 @@ uint32_t getadcv(ADC_HandleTypeDef *hadc)
 	return HAL_ADC_GetValue(hadc);
 }
 
+// convert index in thermistor specs array to actual temperature
 float idxtotemp(size_t idx)
 {
 	return idx * 5.0 - 55.0;
@@ -26,6 +27,7 @@ float idxtotemp(size_t idx)
 
 float voltagetotemp(float v)
 {
+	// 10k ohm thermistor specs. Step is 5 degrees celsius
 	float t[] = {96.300, 67.010, 47.170, 33.650, 24.260, 17.700,
 		13.040, 9.707, 7.293, 5.533, 4.232, 3.265, 2.539, 1.990,
 		1.571, 1.249, 1.000, 0.8057, 0.6531, 0.5327, 0.4369,
@@ -41,8 +43,20 @@ float voltagetotemp(float v)
 	if (v < 0.0001)
 		return 0.0;
 
+	// calculate thermistor resistance at the moment
+	// from voltage value taken from the voltage divideir
+	//
+	// 5.0 is rr / rt, where rr is the resistors value and
+	// rt is the thermistors basic value. In this project
+	// 10k thermistor in series with 50k resistor is used:
+	//
+	// +|---| t |---|50k|---|-
+	//            |
+	//            | out
+	//            |
 	r = 5.0 * (1 - v) / v;
-	
+
+	// 
 	cnt = sizeof(t) / sizeof(float);
 
 	b = 0;
@@ -55,6 +69,8 @@ float voltagetotemp(float v)
 		else		b = c;
 	}
 
+	// linear interpolation between two
+	// adjacent values in thermistor specs
 	return (idxtotemp(e) - 5.0 / (t[b] - t[e]) * (r - t[e]));
 }
 
@@ -101,6 +117,8 @@ int main(void)
 		char a[256];
 		float v;
 
+		// take voltage from a pin with the thermistor
+		// based divider attached
 		v = getadcv(&hadc1) / (float) 0x00000fff;
 
 		displaypos(0, 0);
