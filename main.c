@@ -27,7 +27,9 @@ float idxtotemp(size_t idx)
 
 float voltagetotemp(float v)
 {
-	// 10k ohm thermistor specs. Step is 5 degrees celsius
+	// 10k ohm thermistor specs. Step is 5 degrees celsius.
+	// this values are relation of actual resistance to basic
+	// value of the thermistor (which is 10k)
 	float t[] = {96.300, 67.010, 47.170, 33.650, 24.260, 17.700,
 		13.040, 9.707, 7.293, 5.533, 4.232, 3.265, 2.539, 1.990,
 		1.571, 1.249, 1.000, 0.8057, 0.6531, 0.5327, 0.4369,
