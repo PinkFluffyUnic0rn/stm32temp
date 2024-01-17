@@ -262,7 +262,7 @@ int main(void)
 			displayclear();
 		
 			tickdraw = 0;
-/*
+
 			// take voltage from a pin with the thermistor
 			// based divider attached
 			v = getadcv(&hadc1) / (float) 0x00000fff;
@@ -271,13 +271,12 @@ int main(void)
 
 			snprintf(a, 17, "%.4f C", voltagetotemp(v));
 			displaystring(a);
-*/
 
-
+/*
 			displaypos(0, 3);
 			snprintf(a, 17, "%lu", pulseslastsec);
 			displaystring(a);
-
+*/
 
 			displaypos(1, 3);
 			snprintf(a, 17, "%.4f C",
