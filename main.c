@@ -26,7 +26,7 @@ static void tim2_init(void);
 
 // median filter settings
 #define BUFSIZE 4096
-#define WINSIZE 11
+#define WINSIZE 7
 
 // flag is set when it is time to draw on screen
 int tickdraw = 0;
@@ -223,7 +223,7 @@ float ne555freq2res(float freq)
 	float r1, c;
 
 	r1 = 10000.0f;
-	c = 0.00000022f;
+	c = 0.0000001f;
 
 	return ((2.88f - 2.0f * c * freq * r1)
 		/ (4.0f * c * freq) / 10000.0f);
@@ -252,7 +252,6 @@ int main(void)
 
 	HAL_TIM_Base_Start_IT(&htim2);
 
-
 	while (1) {
 		char a[256];
 
@@ -271,12 +270,6 @@ int main(void)
 
 			snprintf(a, 17, "%.4f C", voltagetotemp(v));
 			displaystring(a);
-
-/*
-			displaypos(0, 3);
-			snprintf(a, 17, "%lu", pulseslastsec);
-			displaystring(a);
-*/
 
 			displaypos(1, 3);
 			snprintf(a, 17, "%.4f C",
