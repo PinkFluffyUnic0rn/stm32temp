@@ -257,7 +257,7 @@ int main(void)
 
 	HAL_TIM_Base_Start_IT(&htim2);
 
-	HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 10);
+	HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 50);
 
 	while (1) {
 		char a[256];
