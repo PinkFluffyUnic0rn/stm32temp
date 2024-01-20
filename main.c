@@ -23,13 +23,17 @@ static void dac_init(void);
 static void gpio_init(void);
 static void tim2_init(void);
 
-#define TIMPERIOD 0x40
+#define TIMPERIOD 0x20
 #define TICKSPERSEC (72000000 / 72 / TIMPERIOD)
 #define DRAWINTERVAL 1.0
 
 // median filter settings
-#define BUFSIZE 4096
-#define WINSIZE 7
+#define BUFSIZE 4092
+#define WINSIZE 3
+
+#define COMPGROUND 50
+#define NE555R1 9900.0f
+#define NE555CAP 0.0000000215f
 
 // flag is set when it is time to draw on screen
 int tickdraw = 0;
@@ -207,14 +211,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 			
 		state = 1;
 
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2,
-			GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
 	}
 	else {
 		state = 0;
 
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2,
-			GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
 	}
 }
 
@@ -225,8 +227,8 @@ float ne555freq2res(float freq)
 	float r;
 	float r1, c;
 
-	r1 = 10000.0f;
-	c = 0.0000001f;
+	r1 = NE555R1;
+	c = NE555CAP;
 
 	return ((1.44f - c * freq * r1)
 		/ (2.0f * c * freq) / 10000.0f);
@@ -257,7 +259,7 @@ int main(void)
 
 	HAL_TIM_Base_Start_IT(&htim2);
 
-	HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 50);
+	HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, COMPGROUND);
 
 	while (1) {
 		char a[256];
