@@ -49,6 +49,7 @@
 /*#define HAL_COMP_MODULE_ENABLED   */
 /*#define HAL_CRC_MODULE_ENABLED   */
 /*#define HAL_CRYP_MODULE_ENABLED   */
+#define HAL_DAC_MODULE_ENABLED   
 /*#define HAL_I2S_MODULE_ENABLED   */
 /*#define HAL_IWDG_MODULE_ENABLED   */
 /*#define HAL_LCD_MODULE_ENABLED   */
@@ -161,6 +162,7 @@
 #define  USE_HAL_CAN_REGISTER_CALLBACKS         0U /* CAN register callback disabled       */
 #define  USE_HAL_COMP_REGISTER_CALLBACKS        0U /* COMP register callback disabled      */
 #define  USE_HAL_CEC_REGISTER_CALLBACKS         0U /* CEC register callback disabled       */
+#define  USE_HAL_DAC_REGISTER_CALLBACKS         0U /* DAC register callback disabled */
 #define  USE_HAL_SRAM_REGISTER_CALLBACKS        0U /* SRAM register callback disabled      */
 #define  USE_HAL_SMBUS_REGISTER_CALLBACKS       0U /* SMBUS register callback disabled     */
 #define  USE_HAL_NAND_REGISTER_CALLBACKS        0U /* NAND register callback disabled      */
@@ -240,6 +242,10 @@
 #ifdef HAL_FLASH_MODULE_ENABLED
  #include "stm32f3xx_hal_flash.h"
 #endif /* HAL_FLASH_MODULE_ENABLED */
+
+#ifdef HAL_DAC_MODULE_ENABLED
+ #include "stm32f3xx_hal_dac.h"
+#endif /* HAL_DAC_MODULE_ENABLED */
 
 #ifdef HAL_SRAM_MODULE_ENABLED
   #include "stm32f3xx_hal_sram.h"

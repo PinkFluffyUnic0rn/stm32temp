@@ -11,12 +11,15 @@ DMA_HandleTypeDef hdma_adc1;
 ADC_HandleTypeDef hadc2;
 DMA_HandleTypeDef hdma_adc2;
 
+DAC_HandleTypeDef hdac;
+
 TIM_HandleTypeDef htim2;
 
 void systemclock_config(void);
 static void dma_init(void);
 static void adc1_init(void);
 static void adc2_init(void);
+static void dac_init(void);
 static void gpio_init(void);
 static void tim2_init(void);
 
@@ -135,7 +138,7 @@ int display_init()
 	pindefs[5].gpio = GPIOA;	pindefs[5].pin = GPIO_PIN_1;
 	pindefs[6].gpio = GPIOA;	pindefs[6].pin = GPIO_PIN_2;
 	pindefs[7].gpio = GPIOA;	pindefs[7].pin = GPIO_PIN_3;
-	pindefs[8].gpio = GPIOA;	pindefs[8].pin = GPIO_PIN_4;
+	pindefs[8].gpio = GPIOB;	pindefs[8].pin = GPIO_PIN_5;
 	pindefs[9].gpio = GPIOA;	pindefs[9].pin = GPIO_PIN_5;
 	pindefs[10].gpio = GPIOA;	pindefs[10].pin = GPIO_PIN_6;
 	pindefs[11].gpio = GPIOA;	pindefs[11].pin = GPIO_PIN_7;
@@ -150,7 +153,7 @@ float medianfilter(float *buf, size_t winsize)
 
 	lowcnt = highcnt = 0;
 	for (i = 0; i < WINSIZE; ++i) {
-		if (buf[i] < 0.5f)	++lowcnt;
+		if (buf[i] < 1.5f)	++lowcnt;
 		else			++highcnt;
 	}
 
@@ -239,11 +242,13 @@ int main(void)
 	dma_init();
 	adc1_init();
 	adc2_init();
+	dac_init();
 	tim2_init();
 	display_init();
 
 	HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 	HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
+        HAL_DAC_Start(&hdac,DAC_CHANNEL_1);
 
 	displayset(DISPLAY_8BIT, DISPLAY_2LINE, DISPLAY_SMALLFONT);
 	displayonoff(DISPLAY_ON, DISPLAY_NOCURSOR, DISPLAY_NOBLINK);
@@ -251,6 +256,8 @@ int main(void)
 	displayentry(DISPLAY_FORWARD, DISPLAY_NOSHIFTSCREEN);
 
 	HAL_TIM_Base_Start_IT(&htim2);
+
+	HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 10);
 
 	while (1) {
 		char a[256];
@@ -331,7 +338,7 @@ static void gpio_init(void)
 
 	HAL_GPIO_WritePin(GPIOB,
 		GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3
-		| GPIO_PIN_4,
+		| GPIO_PIN_4 | GPIO_PIN_5,
 		GPIO_PIN_RESET);
 
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2,
@@ -346,7 +353,7 @@ static void gpio_init(void)
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 	GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1
-		| GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4;
+		| GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -445,6 +452,20 @@ static void adc2_init(void)
 	sConfig.OffsetNumber = ADC_OFFSET_NONE;
 	sConfig.Offset = 0;
 	if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
+		error_handler();
+}
+
+static void dac_init(void)
+{
+	DAC_ChannelConfTypeDef sConfig = {0};
+
+	hdac.Instance = DAC;
+	if (HAL_DAC_Init(&hdac) != HAL_OK)
+		error_handler();
+
+	sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
+	sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
+	if (HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_1) != HAL_OK)
 		error_handler();
 }
 
