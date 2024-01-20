@@ -228,8 +228,8 @@ float ne555freq2res(float freq)
 	r1 = 10000.0f;
 	c = 0.0000001f;
 
-	return ((2.88f - 2.0f * c * freq * r1)
-		/ (4.0f * c * freq) / 10000.0f);
+	return ((1.44f - c * freq * r1)
+		/ (2.0f * c * freq) / 10000.0f);
 }
 
 int main(void)
