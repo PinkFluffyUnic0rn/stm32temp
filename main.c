@@ -33,10 +33,10 @@ static void tim2_init(void);
 
 #define COMPGROUND 50
 #define NE555R1 9900.0f
-#define NE555CAP 0.0000000215f
+#define NE555CAP 0.000000011f
 
 // flag is set when it is time to draw on screen
-int tickdraw = 0;
+volatile int tickdraw = 0;
 
 // samples buffer
 float buf[BUFSIZE];
@@ -49,7 +49,7 @@ size_t pulsecnt = 0;
 int state = 0;
 
 // singal frequency
-size_t pulseslastsec = 0;
+volatile size_t pulseslastsec = 0;
 
 uint32_t getadcv(ADC_HandleTypeDef *hadc)
 {
@@ -276,9 +276,14 @@ int main(void)
 			v = getadcv(&hadc1) / (float) 0x00000fff;
 			
 			displaypos(0, 3);
-
 			snprintf(a, 17, "%.4f C", voltagetotemp(v));
 			displaystring(a);
+/*	
+			displaypos(0, 3);
+			snprintf(a, 17, "%d", pulseslastsec);
+			displaystring(a);
+*/
+
 
 			displaypos(1, 3);
 			snprintf(a, 17, "%.4f C",
@@ -366,7 +371,6 @@ static void gpio_init(void)
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
 }
 
 static void dma_init(void)
