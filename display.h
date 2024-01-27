@@ -22,6 +22,8 @@
 #define DISPLAY_SHIFTSCREEN 1
 #define DISPLAY_NOSHIFTSCREEN 0
 
+#define DISPLAY_PINCOUNT 11
+
 #define pinstate(s) ((s) ? GPIO_PIN_SET : GPIO_PIN_RESET)
 
 struct displaypindef {
@@ -50,6 +52,6 @@ int displayentry(int direction, int screenshift);
 
 int displaypos(int v, int h);
 
-int displayinit(struct displaypindef def[12]);
+int displayinit(struct displaypindef def[DISPLAY_PINCOUNT], int mode);
 
 #endif

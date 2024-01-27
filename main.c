@@ -1,5 +1,6 @@
 #include "main.h"
 #include "display.h"
+#include "usdelay.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -13,6 +14,7 @@ DMA_HandleTypeDef hdma_adc2;
 
 DAC_HandleTypeDef hdac;
 
+TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 
 void systemclock_config(void);
@@ -21,19 +23,22 @@ static void adc1_init(void);
 static void adc2_init(void);
 static void dac_init(void);
 static void gpio_init(void);
+static void tim1_init(void);
 static void tim2_init(void);
 
-#define TIMPERIOD 0x20
-#define TICKSPERSEC (72000000 / 72 / TIMPERIOD)
+#define TIMPRESCALER 72
+#define TIMPERIOD 0xfff
+#define READPERIOD 10
+#define TICKSPERSEC (1000000 / READPERIOD)
 #define DRAWINTERVAL 1.0
 
 // median filter settings
 #define BUFSIZE 4092
-#define WINSIZE 3
+#define WINSIZE 1
 
 #define COMPGROUND 50
 #define NE555R1 9900.0f
-#define NE555CAP 0.000000011f
+#define NE555CAP 0.0000000022f
 
 // flag is set when it is time to draw on screen
 volatile int tickdraw = 0;
@@ -132,22 +137,21 @@ float voltagetotemp(float v)
 
 int display_init()
 {
-	struct displaypindef pindefs[12];
+	struct displaypindef pindefs[DISPLAY_PINCOUNT];
 	
-	pindefs[0].gpio = GPIOB;	pindefs[0].pin = GPIO_PIN_0;
-	pindefs[1].gpio = GPIOB;	pindefs[1].pin = GPIO_PIN_1;
-	pindefs[2].gpio = GPIOB;	pindefs[2].pin = GPIO_PIN_2;
-	pindefs[3].gpio = GPIOB;	pindefs[3].pin = GPIO_PIN_3;
-	pindefs[4].gpio = GPIOA;	pindefs[4].pin = GPIO_PIN_0;
-	pindefs[5].gpio = GPIOA;	pindefs[5].pin = GPIO_PIN_1;
-	pindefs[6].gpio = GPIOA;	pindefs[6].pin = GPIO_PIN_2;
-	pindefs[7].gpio = GPIOA;	pindefs[7].pin = GPIO_PIN_3;
-	pindefs[8].gpio = GPIOB;	pindefs[8].pin = GPIO_PIN_5;
-	pindefs[9].gpio = GPIOA;	pindefs[9].pin = GPIO_PIN_5;
-	pindefs[10].gpio = GPIOA;	pindefs[10].pin = GPIO_PIN_6;
-	pindefs[11].gpio = GPIOA;	pindefs[11].pin = GPIO_PIN_7;
+	pindefs[0].gpio = GPIOB;	pindefs[0].pin = GPIO_PIN_1;
+	pindefs[1].gpio = GPIOB;	pindefs[1].pin = GPIO_PIN_2;
+	pindefs[2].gpio = GPIOB;	pindefs[2].pin = GPIO_PIN_3;
+	pindefs[3].gpio = GPIOA;	pindefs[3].pin = GPIO_PIN_0;
+	pindefs[4].gpio = GPIOA;	pindefs[4].pin = GPIO_PIN_1;
+	pindefs[5].gpio = GPIOA;	pindefs[5].pin = GPIO_PIN_2;
+	pindefs[6].gpio = GPIOA;	pindefs[6].pin = GPIO_PIN_3;
+	pindefs[7].gpio = GPIOB;	pindefs[7].pin = GPIO_PIN_5;
+	pindefs[8].gpio = GPIOA;	pindefs[8].pin = GPIO_PIN_5;
+	pindefs[9].gpio = GPIOA;	pindefs[9].pin = GPIO_PIN_6;
+	pindefs[10].gpio = GPIOA;	pindefs[10].pin = GPIO_PIN_7;
 
-	displayinit(&pindefs);
+	displayinit(&pindefs, DISPLAY_4BIT);
 }
 
 float medianfilter(float *buf, size_t winsize)
@@ -165,7 +169,8 @@ float medianfilter(float *buf, size_t winsize)
 }
 
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
+//void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
+void readsignal()
 {
 	static int t = 0;
 	static int tt = 0;
@@ -188,7 +193,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 
 	// get value from adc and put it into samples buffer
 	v = getadcv(&hadc2) / (float) 0x00000fff * 3.0;
-
+/*
 	if (bufpos >= BUFSIZE - WINSIZE) {
 		bufpos = WINSIZE;
 		memmove(buf, buf + (BUFSIZE - WINSIZE), WINSIZE);
@@ -203,6 +208,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 
 	// perform median filtering to eliminate noise from comparator
 	vf = medianfilter(buf + (bufpos - 1 - WINSIZE / 2), WINSIZE);
+*/
+	vf = v;
 
 	// count PWM frequency and toggle indicating LED
 	if (vf < 1.5f) {
@@ -245,51 +252,57 @@ int main(void)
 	adc1_init();
 	adc2_init();
 	dac_init();
+	tim1_init();
 	tim2_init();
+
+	HAL_TIM_Base_Start_IT(&htim1);
+	HAL_TIM_Base_Start_IT(&htim2);
+	
 	display_init();
 
 	HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 	HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
         HAL_DAC_Start(&hdac,DAC_CHANNEL_1);
 
-	displayset(DISPLAY_8BIT, DISPLAY_2LINE, DISPLAY_SMALLFONT);
 	displayonoff(DISPLAY_ON, DISPLAY_NOCURSOR, DISPLAY_NOBLINK);
-	displayclear();
-	displayentry(DISPLAY_FORWARD, DISPLAY_NOSHIFTSCREEN);
-
-	HAL_TIM_Base_Start_IT(&htim2);
 
 	HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, COMPGROUND);
 
 	while (1) {
 		char a[256];
 
+		__HAL_TIM_SET_COUNTER(&htim2, 0);
+
+		readsignal();
+		
 		if (tickdraw) {
 			float v;
 
-			displayclear();
-		
+			// displayclear();
+
 			tickdraw = 0;
 
 			// take voltage from a pin with the thermistor
 			// based divider attached
 			v = getadcv(&hadc1) / (float) 0x00000fff;
-			
+
 			displaypos(0, 3);
-			snprintf(a, 17, "%.4f C", voltagetotemp(v));
+			snprintf(a, 10, "%.4f C", voltagetotemp(v));
 			displaystring(a);
-/*	
-			displaypos(0, 3);
+/*
+			displaypos(1, 3);
 			snprintf(a, 17, "%d", pulseslastsec);
 			displaystring(a);
 */
 
-
 			displaypos(1, 3);
-			snprintf(a, 17, "%.4f C",
+			snprintf(a, 10, "%.4f C",
 				res2temp(ne555freq2res((float) pulseslastsec)));
 			displaystring(a);
+
 		}
+		
+		while (__HAL_TIM_GET_COUNTER(&htim2) < READPERIOD);
 	}
 }
 
@@ -475,13 +488,40 @@ static void dac_init(void)
 		error_handler();
 }
 
+static void tim1_init(void)
+{
+	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+	TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+	htim1.Instance = TIM1;
+	htim1.Init.Prescaler = 72 - 1;
+	htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim1.Init.Period = 0xffff - 1;
+	htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+
+	if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+		error_handler();
+
+	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+
+	if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+		error_handler();
+
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+		error_handler();
+}
+
 static void tim2_init(void)
 {
 	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
 	TIM_MasterConfigTypeDef sMasterConfig = {0};
 
 	htim2.Instance = TIM2;
-	htim2.Init.Prescaler = 71;
+	htim2.Init.Prescaler = TIMPRESCALER - 1;
 	htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
 	htim2.Init.Period = TIMPERIOD - 1;
 	htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
