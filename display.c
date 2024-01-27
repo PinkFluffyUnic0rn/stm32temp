@@ -94,41 +94,6 @@ int displaypins4(int p2, int p3, int p4, int p5, int p6, int p7,
 	displaypins4_half(p8, p9, p10, p11);
 	displaypins4_half(p4, p5, p6, p7);
 
-/*
-	HAL_GPIO_WritePin(pindefs[7].gpio, pindefs[7].pin,
-		pinstate(p8));
-	HAL_GPIO_WritePin(pindefs[8].gpio, pindefs[8].pin,
-		pinstate(p9));
-	HAL_GPIO_WritePin(pindefs[9].gpio, pindefs[9].pin,
-		pinstate(p10));
-	HAL_GPIO_WritePin(pindefs[10].gpio, pindefs[10].pin,
-		pinstate(p11));
-
-	USDELAY(40);
-	HAL_GPIO_WritePin(pindefs[2].gpio, pindefs[2].pin,
-		pinstate(1));
-	USDELAY(40);
-	HAL_GPIO_WritePin(pindefs[2].gpio, pindefs[2].pin,
-		pinstate(0));
-	USDELAY(40);
-	
-	HAL_GPIO_WritePin(pindefs[7].gpio, pindefs[7].pin,
-		pinstate(p4));
-	HAL_GPIO_WritePin(pindefs[8].gpio, pindefs[8].pin,
-		pinstate(p5));
-	HAL_GPIO_WritePin(pindefs[9].gpio, pindefs[9].pin,
-		pinstate(p6));
-	HAL_GPIO_WritePin(pindefs[10].gpio, pindefs[10].pin,
-		pinstate(p7));
-
-	USDELAY(40);
-	HAL_GPIO_WritePin(pindefs[2].gpio, pindefs[2].pin,
-		pinstate(1));
-	USDELAY(40);
-	HAL_GPIO_WritePin(pindefs[2].gpio, pindefs[2].pin,
-		pinstate(0));
-	USDELAY(40);
-*/
 	return 0;
 }
 
